@@ -1,3 +1,6 @@
+from entities import OPERATORS, Number
+
+
 def parse_expression(expression):
     expression = expression.replace(" ", "")
     expression = expression.expandtabs(0)
@@ -9,11 +12,11 @@ def parse_expression(expression):
     while start_index != len(expression):
         substring_to_check = expression[start_index:end_index]
         if is_number(substring_to_check):
-            parsed_exp.append(substring_to_check)
+            parsed_exp.append(Number(float(substring_to_check)))
             start_index = end_index
             end_index = len(expression)
         elif is_operator(substring_to_check):
-            parsed_exp.append(substring_to_check)
+            parsed_exp.append(OPERATORS[substring_to_check])
             start_index = end_index
             end_index = len(expression)
         else:
@@ -31,7 +34,6 @@ def is_number(substring):
         return False
     return True
 
-OPERATORS = ('+ ', '- ', '*', '/', '//', '%', '^', ')', '(')
 def is_operator(substring):
     return substring in OPERATORS
 
