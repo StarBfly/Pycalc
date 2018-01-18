@@ -26,13 +26,13 @@ def parse_expression(expression):
     return parsed_exp
 
 
-
 def is_number(substring):
     try:
         float(substring)
     except ValueError:
         return False
     return True
+
 
 def is_operator(substring):
     return substring in OPERATORS
