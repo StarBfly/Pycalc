@@ -1,4 +1,4 @@
-from entities import OPERATORS, Number
+from entities import OPERATORS, Number, Function
 
 
 def parse_expression(expression):
@@ -38,3 +38,5 @@ def is_operator(substring):
     return substring in OPERATORS
 
     
+def is_function(substring):
+    return substring in functions

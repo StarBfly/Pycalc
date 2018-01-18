@@ -3,6 +3,7 @@ from collections import namedtuple
 
 Operator = namedtuple("Operator", "name func priority left_associative")
 Number = namedtuple("Number", "value")
+Function = namedtuple("Function", "name func priority left_asociative")
 
 OPERATORS = {
     '+ ': Operator('+ ', lambda x, y: x + y, 10, True),
