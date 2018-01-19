@@ -39,4 +39,5 @@ def is_operator(substring):
 
     
 def is_function(substring):
-    return substring in functions
+    pass
+    
