@@ -1,5 +1,5 @@
 from entities import Number, Operator
-from postfix_notation import generate_postfix_notation
+from postfix_notation_generator import generate_postfix_notation
 from inspect import getargspec
 
 
@@ -11,21 +11,17 @@ def execute_operation(operator, numberStack):
     operands = []
     for item in range(len(argspec.args)):
         operands.insert(0, numberStack.pop())
-        print(numberStack)
     numberStack.append(operator(*operands))
     return numberStack[-1]
-    print(numberStack[-1])
 
 
-def calculate(expression):
+def calculate(postfix_notation):
     numberStack = []
-    for item in generate_postfix_notation(expression):
+    for item in postfix_notation:
         if type(item) is Number:
             numberStack.append(item.value)
-            print(numberStack)
         elif type(item) is Operator:
             execute_operation(item.func, numberStack)
-            print(numberStack)
         else:
             raise ValueError("Unknown type is required.")
     return numberStack[0]
