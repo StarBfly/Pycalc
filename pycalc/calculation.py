@@ -1,27 +1,36 @@
-from entities import Number, Operator
-from postfix_notation_generator import generate_postfix_notation
+from entities import Number, Operator, Function
+from pyparser import Parser
 from inspect import getargspec
 
 
-
-
-
-def execute_operation(operator, numberStack):
+def _execute_operation(operator, number_stack):
     argspec = getargspec(operator)
     operands = []
     for item in range(len(argspec.args)):
-        operands.insert(0, numberStack.pop())
-    numberStack.append(operator(*operands))
-    return numberStack[-1]
+        operands.insert(0, number_stack.pop())
+    number_stack.append(operator(*operands))
+    return number_stack[-1]
 
 
-def calculate(postfix_notation):
-    numberStack = []
-    for item in postfix_notation:
+def _execute_function(func, number_stack):
+    x = number_stack.pop()
+    if type(x) is list:
+        number_stack.append(func(*x))
+    else:
+        number_stack.append(func(x))
+
+
+def calculate(expression):
+    number_stack = []
+    for item in Parser.generate_postfix_notation(expression):
         if type(item) is Number:
-            numberStack.append(item.value)
+            number_stack.append(item.value)
         elif type(item) is Operator:
-            execute_operation(item.func, numberStack)
+            _execute_operation(item.func, number_stack)
+        elif type(item) is Function:
+            _execute_function(item.func, number_stack)
         else:
             raise ValueError("Unknown type is required.")
-    return numberStack[0]
+    if len(number_stack) > 1:
+            raise ValueError('Expression malformed')  # ToDo: find the reason of the problem, write the comment more specific.
+    return number_stack[0]
