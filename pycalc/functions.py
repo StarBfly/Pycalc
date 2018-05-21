@@ -1,21 +1,26 @@
-from entities import Function
+from entities import Function, Constant
+import math
+from pprint import pprint as pp
+
+def math_constants():
+    CONSTANTS = {}
+    for func in dir(math):
+        if isinstance(getattr(math, func), float):
+            CONSTANTS[func] = Constant(func, (getattr(math, func)), 0)
+    return CONSTANTS
+
+#pp(math_constants())
 
 
-def sqrt(x):
-    x = x ** (1.0 / 2)
-    return x
+def math_functions():
+    FUNCTIONS = {}
+    for func in dir(math):
+        if callable(getattr(math, func)):
+            FUNCTIONS[func] = Function(func, (getattr(math, func)), 0)
+
+    return FUNCTIONS
 
 
-def fact(x):
-    if x == 1:
-        return 1
-    else:
-        return x * (fact(x - 1))
+#print('pi' in math_constants())
 
-
-FUNCTIONS = {
-    'abs': Function('abs', abs, 0),
-    'max': Function('max', max, 0),
-    'sqrt': Function('sqrt', sqrt, 0),
-    'fact': Function('fact', fact, 0)
-}
+#pp(math_functions())

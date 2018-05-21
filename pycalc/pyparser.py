@@ -1,10 +1,11 @@
-from entities import Number, Operator, Function
-from functions import FUNCTIONS
+from entities import *
+from functions import math_constants, math_functions
 from operators import OPERATORS
 
 
 class Parser(object):
-    _functions = FUNCTIONS
+    _functions = math_functions()
+    _constants = math_constants()
     _operators = OPERATORS
     _number = Number
 
@@ -23,6 +24,10 @@ class Parser(object):
     @classmethod
     def _is_function(cls, substring):
         return substring in cls._functions
+
+    @classmethod
+    def _is_constant(cls, substring):
+        return substring in cls._constants
 
     @classmethod
     def _replace_sign(cls, expression):
@@ -65,7 +70,11 @@ class Parser(object):
                 start_index = end_index
                 end_index = len(expression)
             elif cls._is_function(substring):
-                parsed_exp.append(FUNCTIONS[substring])
+                parsed_exp.append(math_functions()[substring])
+                start_index = end_index
+                end_index = len(expression)
+            elif cls._is_constant(substring):
+                parsed_exp.append(math_constants()[substring])
                 start_index = end_index
                 end_index = len(expression)
             else:
@@ -103,6 +112,8 @@ class Parser(object):
                     operators_stack.append(token)
             elif isinstance(token, Function):
                 operators_stack.append(token)
+            elif isinstance(token, Constant):
+                postfix_notation.append(token)
             else:
                 raise ValueError(f' "{token}" :unknown object')
         while operators_stack:

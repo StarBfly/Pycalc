@@ -7,6 +7,7 @@ def comma(x, y):
         return x
     return [x, y]
 
+
 OPERATORS = {
     '+ ': Operator('+ ', lambda x, y: x + y, 10, True),
     '- ': Operator('- ', lambda x, y: x - y, 10, True),
