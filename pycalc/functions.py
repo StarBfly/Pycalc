@@ -6,7 +6,7 @@ def math_constants():
     CONSTANTS = {}
     for func in dir(math):
         if isinstance(getattr(math, func), float):
-            CONSTANTS[func] = Constant(func, (getattr(math, func)), 0)
+            CONSTANTS[func] = Constant((getattr(math, func)))
     return CONSTANTS
 
 #pp(math_constants())

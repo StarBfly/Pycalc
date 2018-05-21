@@ -1,4 +1,4 @@
-from entities import Number, Operator, Function
+from entities import *
 from pyparser import Parser
 from inspect import getargspec
 
@@ -24,6 +24,8 @@ def calculate(expression):
     number_stack = []
     for item in Parser.generate_postfix_notation(expression):
         if type(item) is Number:
+            number_stack.append(item.value)
+        elif type(item) is Constant:
             number_stack.append(item.value)
         elif type(item) is Operator:
             _execute_operation(item.func, number_stack)
