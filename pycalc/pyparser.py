@@ -63,10 +63,18 @@ class Parser(object):
             substring = expression[start_index:end_index]
             if cls._is_number(substring):
                 parsed_exp.append(Number(float(substring)))
+                if expression.index(substring) != len(expression) - 1:
+                    if expression[start_index] == '(':
+                        parsed_exp.append(OPERATORS['*'])
                 start_index = end_index
                 end_index = len(expression)
             elif cls._is_operator(substring):
                 parsed_exp.append(OPERATORS[substring])
+                if substring == ')':
+                    if expression.index(substring) != len(expression)-1:
+                        if cls._is_number(expression[expression.index(substring) + 1]) \
+                                or expression[expression.index(substring) + 1] == '(':
+                            parsed_exp.append(OPERATORS['*'])
                 start_index = end_index
                 end_index = len(expression)
             elif cls._is_function(substring):
