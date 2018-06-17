@@ -1,11 +1,12 @@
 from entities import *
-from functions import math_constants, math_functions
-from operators import OPERATORS
+from functions import math_constants, math_functions, builtin_functions
+from operators import OPERATORS, COMPARISSON_OPERATORS
 
 
 class Parser(object):
     _functions = math_functions()
     _constants = math_constants()
+    _built_in_functions = builtin_functions()
     _operators = OPERATORS
     _number = Number
 
@@ -26,6 +27,10 @@ class Parser(object):
         return substring in cls._functions
 
     @classmethod
+    def _is_builtin(cls, substring):
+        return substring in cls._built_in_functions
+
+    @classmethod
     def _is_constant(cls, substring):
         return substring in cls._constants
 
@@ -37,20 +42,57 @@ class Parser(object):
 
     @classmethod
     def _remove_spaces(cls, expression):
-        expression = expression.replace(" ", "")
+        for index, item in enumerate(expression):
+            if cls._is_number(item) or cls._is_constant(item):
+                if index + 2 >= len(expression):
+                    continue
+                next_to_space_item = expression[index + 2]
+                if expression[index + 1] == " " and (cls._is_number(next_to_space_item) or cls._is_constant(next_to_space_item)):
+                    raise ValueError("ERROR: to many unnecessary spaces.")
+            elif cls._is_operator(item):
+                if item == "*" or item == "/":
+                    if index + 2 >= len(expression):
+                        continue
+                    next_to_space_item = expression[index + 2]
+                    if expression[index + 1] == " " and expression[next_to_space_item] == item:
+                        raise ValueError("ERROR: to many unnecessary spaces.")
+                elif item in COMPARISSON_OPERATORS:
+                    if index + 2 >= len(expression):
+                        continue
+                    next_to_space_item = expression[index + 2]
+                    if expression[index + 1] == " " and expression[next_to_space_item] in COMPARISSON_OPERATORS:
+                        raise ValueError("ERROR: to many unnecessary spaces.")
+
+            elif item == " " or cls._is_function(item) or cls._is_builtin(item):
+                continue
+            else:
+                expression = expression.replace(" ", "")
         expression = expression.expandtabs(0)
         return expression
 
     @classmethod
     def _change_signs(cls, parsed_exp):
-        x = 0
-        while x < len(parsed_exp):
-            if type(parsed_exp[x]) is Operator and parsed_exp[x].name in ("- ", "+ "):
-                if x == 0 or type(parsed_exp[x - 1]) is Operator:
-                    if parsed_exp[x - 1].name != ")":
-                        parsed_exp[x] = OPERATORS[parsed_exp[x].name.strip()]
-            x += 1
-        return parsed_exp
+        is_changed = False
+        for idx in range(len(parsed_exp)-1):
+            if type(parsed_exp[idx]) is Operator and parsed_exp[idx].name in ("- ", "+ "):
+                if isinstance(parsed_exp[idx +1], Number) or (isinstance(parsed_exp[idx+1], Operator) and parsed_exp[idx+1].name in ["(", "-", "+"]) or isinstance(parsed_exp[idx+1], Function) or isinstance(parsed_exp[idx+1], Constant):
+                    if idx == 0:
+                        parsed_exp[idx] = OPERATORS[parsed_exp[idx].name.strip()]
+                        is_changed = True
+                    elif isinstance(parsed_exp[idx - 1], Operator) and parsed_exp[idx-1].name != ")":
+                        parsed_exp[idx] = OPERATORS[parsed_exp[idx].name.strip()]
+                        is_changed = True
+        return is_changed, parsed_exp
+
+    @classmethod
+    def tokens_check(cls, expression, parsed_expression):
+        nums_constants_list = []
+        for token in parsed_expression:
+            if isinstance(token, Number) or isinstance(token, Constant):
+                nums_constants_list.append(token)
+        if len(nums_constants_list) == 0:
+            raise ValueError(f'Sorry, but "{expression}" is not enough for me to calculate.'
+                             "ERROR: missing numbers or constants")
 
     @classmethod
     def parse_expression(cls, expression):
@@ -63,8 +105,8 @@ class Parser(object):
             substring = expression[start_index:end_index]
             if cls._is_number(substring):
                 parsed_exp.append(Number(float(substring)))
-                if expression.index(substring) != len(expression) - 1:
-                    if expression[start_index] == '(':
+                if end_index != len(expression):
+                    if expression[end_index] == '(':
                         parsed_exp.append(OPERATORS['*'])
                 start_index = end_index
                 end_index = len(expression)
@@ -77,8 +119,12 @@ class Parser(object):
                             parsed_exp.append(OPERATORS['*'])
                 start_index = end_index
                 end_index = len(expression)
+            elif cls._is_builtin(substring):
+                parsed_exp.append(cls._built_in_functions[substring])
+                start_index = end_index
+                end_index = len(expression)
             elif cls._is_function(substring):
-                parsed_exp.append(math_functions()[substring])
+                parsed_exp.append(cls._functions[substring])
                 start_index = end_index
                 end_index = len(expression)
             elif cls._is_constant(substring):
@@ -89,12 +135,15 @@ class Parser(object):
                 end_index -= 1
                 if end_index == start_index:
                     raise ValueError(f'"{substring}" can not be parsed.')
-        parsed_exp = cls._change_signs(parsed_exp)
+        is_changed, parsed_exp = cls._change_signs(parsed_exp)
+        while is_changed:
+            is_changed, parsed_exp = cls._change_signs(parsed_exp)
         return parsed_exp
 
     @classmethod
     def generate_postfix_notation(cls, expression):
         parsed_expression = cls.parse_expression(expression)
+        cls.tokens_check(expression, parsed_expression)
         postfix_notation = []
         operators_stack = []
         for token in parsed_expression:

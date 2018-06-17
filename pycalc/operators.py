@@ -30,3 +30,5 @@ OPERATORS = {
     ',': Operator(',', comma, 1, True),
 
 }
+
+COMPARISSON_OPERATORS = ['<', '>', '<=', '>=', '==', '!=']

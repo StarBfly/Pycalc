@@ -7,7 +7,10 @@ def main():
     if len(sys.argv) > 1:
         print(calculate(sys.argv[1]))
     else:
-        print("ERROR: no expression given.")
+        print("You forget to give me your expression, darling."
+              "ERROR: missing expression")
+
+
 
 
 if __name__ == "__main__":
