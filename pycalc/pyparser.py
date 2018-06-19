@@ -1,11 +1,11 @@
 from entities import *
-from functions import math_constants, math_functions, builtin_functions
+from functions import all_modules_constants, all_modules_functions, builtin_functions
 from operators import OPERATORS, COMPARISSON_OPERATORS
 
 
 class Parser(object):
-    _functions = math_functions()
-    _constants = math_constants()
+    _functions = all_modules_functions()
+    _constants = all_modules_constants()
     _built_in_functions = builtin_functions()
     _operators = OPERATORS
     _number = Number
@@ -128,7 +128,7 @@ class Parser(object):
                 start_index = end_index
                 end_index = len(expression)
             elif cls._is_constant(substring):
-                parsed_exp.append(math_constants()[substring])
+                parsed_exp.append(cls._constants[substring])
                 start_index = end_index
                 end_index = len(expression)
             else:
