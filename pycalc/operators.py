@@ -31,4 +31,4 @@ OPERATORS = {
 
 }
 
-COMPARISSON_OPERATORS = ['<', '>', '<=', '>=', '==', '!=']
+COMPARISON_OPERATORS = ['<', '>', '<=', '>=', '==', '!=']

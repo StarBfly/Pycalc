@@ -1,6 +1,7 @@
-from entities import *
-from pyparser import Parser
+from pycalc.entities import is_operator, is_num, is_const, is_func
+from postfix_notation_generator import PostfixNotation
 from inspect import getargspec
+from error_codes import TYPE_ERROR, MALFORMED_EXPRESSION
 
 
 def _execute_operation(operator, number_stack):
@@ -22,17 +23,18 @@ def _execute_function(func, number_stack):
 
 def calculate(expression):
     number_stack = []
-    for item in Parser.generate_postfix_notation(expression):
-        if type(item) is Number:
+    postfix = PostfixNotation(expression)
+    for item in postfix.generate_postfix_notation():
+        if is_num(item):
             number_stack.append(item.value)
-        elif type(item) is Constant:
+        elif is_const(item):
             number_stack.append(item.value)
-        elif type(item) is Operator:
+        elif is_operator(item):
             _execute_operation(item.func, number_stack)
-        elif type(item) is Function:
+        elif is_func(item):
             _execute_function(item.func, number_stack)
         else:
-            raise ValueError("Unknown type is required.")
+            raise TypeError(TYPE_ERROR)
     if len(number_stack) > 1:
-            raise ValueError('Expression malformed')  # ToDo: find the reason of the problem, write the comment more specific.
+            raise ValueError(MALFORMED_EXPRESSION)  # ToDo: find the reason of the problem, write the comment more specific.
     return number_stack[0]

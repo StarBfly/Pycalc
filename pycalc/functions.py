@@ -1,4 +1,4 @@
-from entities import Function, Constant
+from pycalc.entities import Function, Constant
 from launcher import _parse_args
 import importlib
 import types
