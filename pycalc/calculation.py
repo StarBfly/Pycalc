@@ -1,4 +1,4 @@
-from pycalc.entities import is_operator, is_num, is_const, is_func
+from entities import is_operator, is_num, is_const, is_func
 from postfix_notation_generator import PostfixNotation
 from inspect import getargspec
 from error_codes import TYPE_ERROR, MALFORMED_EXPRESSION

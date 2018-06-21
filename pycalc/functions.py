@@ -1,4 +1,4 @@
-from pycalc.entities import Function, Constant
+from entities import Function, Constant
 from launcher import _parse_args
 import importlib
 import types
@@ -23,8 +23,8 @@ def upload_module_functions(module):
 
 
 def all_modules_constants():
-    args = _parse_args()
-    module_list = ["math", ] + args.m
+    # args = _parse_args()
+    module_list = ["math", ]# + args.use_modules
     constants_dict = {}
     for module in module_list:
         module = importlib.__import__(module)
@@ -33,12 +33,13 @@ def all_modules_constants():
 
 
 def all_modules_functions():
-    args = _parse_args()
-    module_list = ["math", ] + args.m
+    # args = _parse_args()
+    # import pdb; pdb.set_trace()
+    module_list = ["math", ]# + args.use_modules
     funcs_dict = {}
     for module in module_list:
         module = importlib.__import__(module)
-        funcs_dict.update(upload_module_constants(module))
+        funcs_dict.update(upload_module_functions(module))
     return funcs_dict
 
 

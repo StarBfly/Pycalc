@@ -1,4 +1,4 @@
-from entities import is_const, is_num, is_operator, Number
+from entities import is_const, is_num, is_operator, is_func, Number
 from functions import all_modules_constants, all_modules_functions, builtin_functions
 from operators import OPERATORS, COMPARISON_OPERATORS
 from error_codes import EXTRA_SPACES, nonparsable_substring
@@ -44,25 +44,27 @@ class Parser(object):
         expression = expression.replace("-", "- ")
         return expression
 
-    def _update_substring(self, end_index):
+    @staticmethod
+    def _update_substring(expression, end_index):
         start_index = end_index
-        end_index = len(self.expression)
+        end_index = len(expression)
         return start_index, end_index
 
     def _next_item_is_space(self, index):
         next_item = self.expression[index + 1]
         return next_item == " "
 
-    def _add_implicit_multiplication(self, substring, end_index, parsed_exp):
+    @staticmethod
+    def _add_implicit_multiplication(expression, substring, end_index, parsed_exp):
         if Parser._is_number(substring):
-            if end_index != len(self.expression):
-                next_item = self.expression[end_index]
+            if end_index != len(expression):
+                next_item = expression[end_index]
                 if next_item == '(':
                     parsed_exp.append(OPERATORS['*'])
         elif substring == ')':
-            if self.expression.index(substring) != len(self.expression) - 1:
-                next_item_index = self.expression.index(substring) + 1
-                next_item = self.expression[next_item_index]
+            if expression.index(substring) != len(expression) - 1:
+                next_item_index = expression.index(substring) + 1
+                next_item = expression[next_item_index]
                 if Parser._is_number(next_item) or next_item == '(':
                     parsed_exp.append(OPERATORS['*'])
 
@@ -96,22 +98,20 @@ class Parser(object):
                 self._check_spaces_nums_const(index)
             elif Parser._is_operator(item):
                 self._check_spaces_operator(index, item)
-            elif item == " " or Parser._is_function(item) or Parser._is_builtin(item):
-                continue
-            else:
-                expression = self.expression.replace(" ", "")
-                expression = expression.expandtabs(0)
-                return expression
+
+        expression = self.expression.replace(" ", "")
+        expression = expression.expandtabs(0)
+
+        return expression
 
     @staticmethod
     def add_unary_minus(parsed_exp, index, item):
         previous_item = parsed_exp[index - 1]
-        if index == 0:
+        if index == 0 or (is_operator(previous_item) and previous_item.name != ")"):
             parsed_exp[index] = OPERATORS[item.name.strip()]
             is_changed = True
-        elif is_operator(previous_item) and previous_item.name != ")":
-            parsed_exp[index] = OPERATORS[item.name.strip()]
-            is_changed = True
+        else:
+            is_changed = False
         return is_changed, parsed_exp
 
     @staticmethod
@@ -127,6 +127,8 @@ class Parser(object):
                     is_changed, parsed_exp = Parser.add_unary_minus(parsed_exp, index, item)
                 elif is_num(next_item) or is_const(next_item):
                     is_changed, parsed_exp = Parser.add_unary_minus(parsed_exp, index, item)
+                elif is_func(next_item):
+                    is_changed, parsed_exp = Parser.add_unary_minus(parsed_exp, index, item)
 
         return is_changed, parsed_exp
 
@@ -140,21 +142,21 @@ class Parser(object):
             substring = expression[start_index:end_index]
             if Parser._is_number(substring):
                 parsed_exp.append(Number(float(substring)))
-                self._add_implicit_multiplication(substring, end_index, parsed_exp)
-                start_index, end_index = self._update_substring(end_index)
+                Parser._add_implicit_multiplication(expression, substring, end_index, parsed_exp)
+                start_index, end_index = Parser._update_substring(expression, end_index)
             elif Parser._is_operator(substring):
                 parsed_exp.append(OPERATORS[substring])
-                self._add_implicit_multiplication(substring, end_index, parsed_exp)
-                start_index, end_index = self._update_substring(end_index)
+                Parser._add_implicit_multiplication(expression, substring, end_index, parsed_exp)
+                start_index, end_index = Parser._update_substring(expression, end_index)
             elif Parser._is_builtin(substring):
                 parsed_exp.append(Parser._built_in_functions[substring])
-                start_index, end_index = self._update_substring(end_index)
+                start_index, end_index = Parser._update_substring(expression, end_index)
             elif Parser._is_function(substring):
                 parsed_exp.append(Parser._functions[substring])
-                start_index, end_index = self._update_substring(end_index)
+                start_index, end_index = Parser._update_substring(expression, end_index)
             elif Parser._is_constant(substring):
                 parsed_exp.append(Parser._constants[substring])
-                start_index, end_index = self._update_substring(end_index)
+                start_index, end_index = Parser._update_substring(expression, end_index)
             else:
                 end_index -= 1
                 if end_index == start_index:
