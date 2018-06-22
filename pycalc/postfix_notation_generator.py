@@ -1,14 +1,16 @@
-from entities import Number, Operator, Function, Constant
-from pyparser import Parser
-from error_codes import NUMS_CONST_MISSING, WRONG_PLACED_PARENTHESIS, unknown_object
+from pycalc.entities import Number, Operator, Function, Constant
+from pycalc.pyparser import Parser
+from pycalc.error_codes import NUMS_CONST_MISSING, WRONG_PLACED_PARENTHESIS, unknown_object
 
 
 class PostfixNotation:
+    """Class is in charge of creation for postfix notation"""
     def __init__(self, expression, modules):
         self.parser = Parser(expression, modules)
         self.parsed_expression = self.parser.parse_expression()
 
     def tokens_check(self):
+        """Check if expression entities are balanced for calculation """
         nums_constants_list = []
         for token in self.parsed_expression:
             if isinstance(token, Number) or isinstance(token, Constant):

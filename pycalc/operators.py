@@ -1,4 +1,4 @@
-from entities import Operator
+from pycalc.entities import Operator
 
 
 def comma(x, y):

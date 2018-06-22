@@ -1,11 +1,11 @@
-from entities import is_const, is_num, is_operator, is_func, Number
-import functions
-from operators import OPERATORS, COMPARISON_OPERATORS
-from error_codes import EXTRA_SPACES, nonparsable_substring
+from pycalc.entities import is_const, is_num, is_operator, is_func, Number
+from pycalc import functions
+from pycalc.operators import OPERATORS, COMPARISON_OPERATORS
+from pycalc.error_codes import EXTRA_SPACES, nonparsable_substring
 
 
 class Parser(object):
-
+    """Split expression into tokens according to given entities types """
     def __init__(self, expression, modules):
         self.expression = expression
         self.modules = modules
@@ -103,11 +103,10 @@ class Parser(object):
     @staticmethod
     def add_unary_minus(parsed_exp, index, item):
         previous_item = parsed_exp[index - 1]
+        is_changed = False
         if index == 0 or (is_operator(previous_item) and previous_item.name != ")"):
             parsed_exp[index] = OPERATORS[item.name.strip()]
             is_changed = True
-        else:
-            is_changed = False
         return is_changed, parsed_exp
 
     @staticmethod

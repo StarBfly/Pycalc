@@ -1,9 +1,10 @@
-from entities import Function, Constant
+from pycalc.entities import Function, Constant
 import importlib
 import types
 
 
 def upload_module_constants(module):
+    """Uploads all constants from given module into dictionary of Constant-objects"""
     constants = {}
     for func in dir(module):
         if isinstance(getattr(module, func), float):
@@ -13,6 +14,7 @@ def upload_module_constants(module):
 
 
 def upload_module_functions(module):
+    """Uploads all functions from given module into dictionary of Function-objects"""
     functions = {}
     for func in dir(module):
         if callable(getattr(module, func)):
@@ -22,6 +24,7 @@ def upload_module_functions(module):
 
 
 def all_modules_constants(modules_list):
+    """Uploads all constants from given list of modules"""
     constants_dict = {}
     for module in modules_list:
         module = importlib.__import__(module)
@@ -30,6 +33,7 @@ def all_modules_constants(modules_list):
 
 
 def all_modules_functions(modules_list):
+    """Uploads all functions from given list of modules"""
     funcs_dict = {}
     for module in modules_list:
         module = importlib.__import__(module)
@@ -38,6 +42,7 @@ def all_modules_functions(modules_list):
 
 
 def builtin_functions():
+    """ Adds all builtin-functions into dictionary of Function-objects """
     glob = globals()
     builtins_dict = glob["__builtins__"]
     builtin_funcs = {}

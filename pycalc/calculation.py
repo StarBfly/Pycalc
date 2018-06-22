@@ -1,11 +1,11 @@
-from entities import is_operator, is_num, is_const, is_func
-import postfix_notation_generator
-from inspect import getargspec
-from error_codes import TYPE_ERROR, MALFORMED_EXPRESSION
+from pycalc.entities import is_operator, is_num, is_const, is_func
+from pycalc import postfix_notation_generator
+from inspect import getfullargspec
+from pycalc.error_codes import TYPE_ERROR, MALFORMED_EXPRESSION
 
 
 def _execute_operation(operator, number_stack):
-    argspec = getargspec(operator)
+    argspec = getfullargspec(operator)
     operands = []
     for item in range(len(argspec.args)):
         operands.insert(0, number_stack.pop())
@@ -22,6 +22,9 @@ def _execute_function(func, number_stack):
 
 
 def calculate(expression, modules=None):
+    """Calculate given expression
+    :param expression:
+    :param modules: list of uploaded modules"""
     number_stack = []
     modules = ["math", ] if not modules else ["math", ] + modules
     postfix = postfix_notation_generator.PostfixNotation(expression, modules)
@@ -37,5 +40,5 @@ def calculate(expression, modules=None):
         else:
             raise TypeError(TYPE_ERROR)
     if len(number_stack) > 1:
-            raise ValueError(MALFORMED_EXPRESSION)
+        raise ValueError(MALFORMED_EXPRESSION)
     return number_stack[0]
