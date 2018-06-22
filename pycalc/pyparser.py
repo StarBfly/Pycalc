@@ -1,132 +1,162 @@
-from entities import *
-from functions import math_constants, math_functions
-from operators import OPERATORS
+from pycalc.entities import is_const, is_num, is_operator, is_func, Number
+from pycalc import functions
+from pycalc.operators import OPERATORS, COMPARISON_OPERATORS
+from pycalc.error_codes import EXTRA_SPACES, nonparsable_substring
 
 
 class Parser(object):
-    _functions = math_functions()
-    _constants = math_constants()
-    _operators = OPERATORS
-    _number = Number
+    """Split expression into tokens according to given entities types """
+    def __init__(self, expression, modules):
+        self.expression = expression
+        self.modules = modules
+        self._functions = functions.all_modules_functions(self.modules)
+        self._constants = functions.all_modules_constants(self.modules)
+        self._built_in_functions = functions.builtin_functions()
 
-    @classmethod
-    def _is_number(cls, substring):
+    @staticmethod
+    def _is_number(substring):
         try:
             float(substring)
         except ValueError:
             return False
         return True
 
-    @classmethod
-    def _is_operator(cls, substring):
-        return substring in cls._operators
+    @staticmethod
+    def _is_operator(substring):
+        return substring in OPERATORS
 
-    @classmethod
-    def _is_function(cls, substring):
-        return substring in cls._functions
+    def _is_function(self, substring):
+        return substring in self._functions
 
-    @classmethod
-    def _is_constant(cls, substring):
-        return substring in cls._constants
+    def _is_builtin(self, substring):
+        return substring in self._built_in_functions
 
-    @classmethod
-    def _replace_sign(cls, expression):
+    def _is_constant(self, substring):
+        return substring in self._constants
+
+    @staticmethod
+    def _replace_sign(expression):
         expression = expression.replace("+", "+ ")
         expression = expression.replace("-", "- ")
         return expression
 
-    @classmethod
-    def _remove_spaces(cls, expression):
-        expression = expression.replace(" ", "")
+    @staticmethod
+    def _update_substring(expression, end_index):
+        start_index = end_index
+        end_index = len(expression)
+        return start_index, end_index
+
+    def _next_item_is_space(self, index):
+        next_item = self.expression[index + 1]
+        return next_item == " "
+
+    @staticmethod
+    def _add_implicit_multiplication(expression, substring, end_index, parsed_exp):
+        if Parser._is_number(substring):
+            if end_index != len(expression):
+                next_item = expression[end_index]
+                if next_item == '(':
+                    parsed_exp.append(OPERATORS['*'])
+        elif substring == ')':
+            if expression.index(substring) != len(expression) - 1:
+                next_item_index = expression.index(substring) + 1
+                next_item = expression[next_item_index]
+                if Parser._is_number(next_item) or next_item == '(':
+                    parsed_exp.append(OPERATORS['*'])
+
+    def _last_item_is_space(self, index):
+        return index + 2 >= len(self.expression)
+
+    def _check_spaces_nums_const(self, index):
+        if not self._last_item_is_space(index):
+            next_to_space_item = self.expression[index + 2]
+            after_space_is_num = Parser._is_number(next_to_space_item)
+            after_space_is_const = self._is_constant(next_to_space_item)
+            if self._next_item_is_space(index) and (after_space_is_num or after_space_is_const):
+                raise ValueError(EXTRA_SPACES)
+
+    def _check_spaces_operator(self, index, item):
+        if item == "*" or item == "/":
+            if not self._last_item_is_space(index):
+                next_to_space_item = self.expression[index + 2]
+                if self._next_item_is_space(index) and next_to_space_item == item:
+                    raise ValueError(EXTRA_SPACES)
+
+        elif item in COMPARISON_OPERATORS:
+            if not self._last_item_is_space(index):
+                next_to_space_item = self.expression[index + 2]
+                if self._next_item_is_space(index) and next_to_space_item in COMPARISON_OPERATORS:
+                    raise ValueError(EXTRA_SPACES)
+
+    def _remove_spaces(self):
+        for index, item in enumerate(self.expression):
+            if Parser._is_number(item) or self._is_constant(item):
+                self._check_spaces_nums_const(index)
+            elif Parser._is_operator(item):
+                self._check_spaces_operator(index, item)
+
+        expression = self.expression.replace(" ", "")
         expression = expression.expandtabs(0)
+
         return expression
 
-    @classmethod
-    def _change_signs(cls, parsed_exp):
-        x = 0
-        while x < len(parsed_exp):
-            if type(parsed_exp[x]) is Operator and parsed_exp[x].name in ("- ", "+ "):
-                if x == 0 or type(parsed_exp[x - 1]) is Operator:
-                    if parsed_exp[x - 1].name != ")":
-                        parsed_exp[x] = OPERATORS[parsed_exp[x].name.strip()]
-            x += 1
-        return parsed_exp
+    @staticmethod
+    def add_unary_minus(parsed_exp, index, item):
+        previous_item = parsed_exp[index - 1]
+        is_changed = False
+        if index == 0 or (is_operator(previous_item) and previous_item.name != ")"):
+            parsed_exp[index] = OPERATORS[item.name.strip()]
+            is_changed = True
+        return is_changed, parsed_exp
 
-    @classmethod
-    def parse_expression(cls, expression):
-        expression = cls._remove_spaces(expression)
-        expression = cls._replace_sign(expression)
+    @staticmethod
+    def change_signs(parsed_exp):
+        is_changed = False
+        for index in range(len(parsed_exp)-1):
+            item = parsed_exp[index]
+            next_item = parsed_exp[index+1]
+            if is_operator(item) and item.name in ("- ", "+ "):
+                if is_num(next_item):
+                    is_changed, parsed_exp = Parser.add_unary_minus(parsed_exp, index, item)
+                elif is_operator(next_item) and next_item.name in ["(", "-", "+"]:
+                    is_changed, parsed_exp = Parser.add_unary_minus(parsed_exp, index, item)
+                elif is_num(next_item) or is_const(next_item):
+                    is_changed, parsed_exp = Parser.add_unary_minus(parsed_exp, index, item)
+                elif is_func(next_item):
+                    is_changed, parsed_exp = Parser.add_unary_minus(parsed_exp, index, item)
+
+        return is_changed, parsed_exp
+
+    def parse_expression(self):
+        expression = self._remove_spaces()
+        expression = Parser._replace_sign(expression)
         start_index = 0
         end_index = len(expression)
         parsed_exp = []
         while start_index != len(expression):
             substring = expression[start_index:end_index]
-            if cls._is_number(substring):
+            if Parser._is_number(substring):
                 parsed_exp.append(Number(float(substring)))
-                if expression.index(substring) != len(expression) - 1:
-                    if expression[start_index] == '(':
-                        parsed_exp.append(OPERATORS['*'])
-                start_index = end_index
-                end_index = len(expression)
-            elif cls._is_operator(substring):
+                Parser._add_implicit_multiplication(expression, substring, end_index, parsed_exp)
+                start_index, end_index = Parser._update_substring(expression, end_index)
+            elif Parser._is_operator(substring):
                 parsed_exp.append(OPERATORS[substring])
-                if substring == ')':
-                    if expression.index(substring) != len(expression)-1:
-                        if cls._is_number(expression[expression.index(substring) + 1]) \
-                                or expression[expression.index(substring) + 1] == '(':
-                            parsed_exp.append(OPERATORS['*'])
-                start_index = end_index
-                end_index = len(expression)
-            elif cls._is_function(substring):
-                parsed_exp.append(math_functions()[substring])
-                start_index = end_index
-                end_index = len(expression)
-            elif cls._is_constant(substring):
-                parsed_exp.append(math_constants()[substring])
-                start_index = end_index
-                end_index = len(expression)
+                Parser._add_implicit_multiplication(expression, substring, end_index, parsed_exp)
+                start_index, end_index = Parser._update_substring(expression, end_index)
+            elif self._is_builtin(substring):
+                parsed_exp.append(self._built_in_functions[substring])
+                start_index, end_index = Parser._update_substring(expression, end_index)
+            elif self._is_function(substring):
+                parsed_exp.append(self._functions[substring])
+                start_index, end_index = Parser._update_substring(expression, end_index)
+            elif self._is_constant(substring):
+                parsed_exp.append(self._constants[substring])
+                start_index, end_index = Parser._update_substring(expression, end_index)
             else:
                 end_index -= 1
                 if end_index == start_index:
-                    raise ValueError(f'"{substring}" can not be parsed.')
-        parsed_exp = cls._change_signs(parsed_exp)
+                    raise ValueError(nonparsable_substring(substring))
+        is_changed, parsed_exp = Parser.change_signs(parsed_exp)
+        while is_changed:
+            is_changed, parsed_exp = Parser.change_signs(parsed_exp)
         return parsed_exp
-
-    @classmethod
-    def generate_postfix_notation(cls, expression):
-        parsed_expression = cls.parse_expression(expression)
-        postfix_notation = []
-        operators_stack = []
-        for token in parsed_expression:
-            if isinstance(token, Number):
-                postfix_notation.append(token)
-            elif isinstance(token, Operator):
-                if token.name == '(':
-                    operators_stack.append(token)
-                elif token.name == ')':
-                    while operators_stack and operators_stack[-1].name != '(':
-                        postfix_notation.append(operators_stack.pop())
-                    if operators_stack:
-                        operators_stack.pop()
-                    else:
-                        raise ValueError('Parenthesis are not balanced.')
-                else:
-                    if not token.left_associative:
-                        while operators_stack and token.priority < operators_stack[-1].priority:
-                            postfix_notation.append(operators_stack.pop())
-                    else:
-                        while operators_stack and token.priority <= operators_stack[-1].priority:
-                            postfix_notation.append(operators_stack.pop())
-                    operators_stack.append(token)
-            elif isinstance(token, Function):
-                operators_stack.append(token)
-            elif isinstance(token, Constant):
-                postfix_notation.append(token)
-            else:
-                raise ValueError(f' "{token}" :unknown object')
-        while operators_stack:
-            if isinstance(operators_stack[-1], Number):
-                raise ValueError('Parenthesis are not balanced.')
-            postfix_notation.append(operators_stack.pop())
-
-        return postfix_notation
