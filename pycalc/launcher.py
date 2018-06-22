@@ -1,5 +1,7 @@
 #!/usr/bin/env python3.6
 import argparse
+import calculation
+
 
 def _parse_args():
     parser = argparse.ArgumentParser("pycalc")
@@ -10,8 +12,8 @@ def _parse_args():
 
 
 if __name__ == "__main__":
-    from calculation import calculate
 
     args = _parse_args()
     expression = args.EXPRESSION
-    result = calculate(expression)
+    result = calculation.calculate(expression, args.use_modules)
+    print(result)

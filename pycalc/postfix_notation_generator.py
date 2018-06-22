@@ -4,8 +4,8 @@ from error_codes import NUMS_CONST_MISSING, WRONG_PLACED_PARENTHESIS, unknown_ob
 
 
 class PostfixNotation:
-    def __init__(self, expression):
-        self.parser = Parser(expression)
+    def __init__(self, expression, modules):
+        self.parser = Parser(expression, modules)
         self.parsed_expression = self.parser.parse_expression()
 
     def tokens_check(self):

@@ -1,18 +1,17 @@
 from entities import is_const, is_num, is_operator, is_func, Number
-from functions import all_modules_constants, all_modules_functions, builtin_functions
+import functions
 from operators import OPERATORS, COMPARISON_OPERATORS
 from error_codes import EXTRA_SPACES, nonparsable_substring
 
 
 class Parser(object):
-    _functions = all_modules_functions()
-    _constants = all_modules_constants()
-    _built_in_functions = builtin_functions()
-    _operators = OPERATORS
-    _number = Number
 
-    def __init__(self, expression):
+    def __init__(self, expression, modules):
         self.expression = expression
+        self.modules = modules
+        self._functions = functions.all_modules_functions(self.modules)
+        self._constants = functions.all_modules_constants(self.modules)
+        self._built_in_functions = functions.builtin_functions()
 
     @staticmethod
     def _is_number(substring):
@@ -24,19 +23,16 @@ class Parser(object):
 
     @staticmethod
     def _is_operator(substring):
-        return substring in Parser._operators
+        return substring in OPERATORS
 
-    @staticmethod
-    def _is_function(substring):
-        return substring in Parser._functions
+    def _is_function(self, substring):
+        return substring in self._functions
 
-    @staticmethod
-    def _is_builtin(substring):
-        return substring in Parser._built_in_functions
+    def _is_builtin(self, substring):
+        return substring in self._built_in_functions
 
-    @staticmethod
-    def _is_constant(substring):
-        return substring in Parser._constants
+    def _is_constant(self, substring):
+        return substring in self._constants
 
     @staticmethod
     def _replace_sign(expression):
@@ -75,7 +71,7 @@ class Parser(object):
         if not self._last_item_is_space(index):
             next_to_space_item = self.expression[index + 2]
             after_space_is_num = Parser._is_number(next_to_space_item)
-            after_space_is_const = Parser._is_constant(next_to_space_item)
+            after_space_is_const = self._is_constant(next_to_space_item)
             if self._next_item_is_space(index) and (after_space_is_num or after_space_is_const):
                 raise ValueError(EXTRA_SPACES)
 
@@ -94,7 +90,7 @@ class Parser(object):
 
     def _remove_spaces(self):
         for index, item in enumerate(self.expression):
-            if Parser._is_number(item) or Parser._is_constant(item):
+            if Parser._is_number(item) or self._is_constant(item):
                 self._check_spaces_nums_const(index)
             elif Parser._is_operator(item):
                 self._check_spaces_operator(index, item)
@@ -148,14 +144,14 @@ class Parser(object):
                 parsed_exp.append(OPERATORS[substring])
                 Parser._add_implicit_multiplication(expression, substring, end_index, parsed_exp)
                 start_index, end_index = Parser._update_substring(expression, end_index)
-            elif Parser._is_builtin(substring):
-                parsed_exp.append(Parser._built_in_functions[substring])
+            elif self._is_builtin(substring):
+                parsed_exp.append(self._built_in_functions[substring])
                 start_index, end_index = Parser._update_substring(expression, end_index)
-            elif Parser._is_function(substring):
-                parsed_exp.append(Parser._functions[substring])
+            elif self._is_function(substring):
+                parsed_exp.append(self._functions[substring])
                 start_index, end_index = Parser._update_substring(expression, end_index)
-            elif Parser._is_constant(substring):
-                parsed_exp.append(Parser._constants[substring])
+            elif self._is_constant(substring):
+                parsed_exp.append(self._constants[substring])
                 start_index, end_index = Parser._update_substring(expression, end_index)
             else:
                 end_index -= 1

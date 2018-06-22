@@ -2,6 +2,7 @@ import unittest
 from pycalc import calculation
 from math import *
 
+
 class OKTest(unittest.TestCase):
 
     def test_unary_operators(self):

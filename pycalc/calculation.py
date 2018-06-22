@@ -1,5 +1,5 @@
 from entities import is_operator, is_num, is_const, is_func
-from postfix_notation_generator import PostfixNotation
+import postfix_notation_generator
 from inspect import getargspec
 from error_codes import TYPE_ERROR, MALFORMED_EXPRESSION
 
@@ -21,9 +21,10 @@ def _execute_function(func, number_stack):
         number_stack.append(func(x))
 
 
-def calculate(expression):
+def calculate(expression, modules=None):
     number_stack = []
-    postfix = PostfixNotation(expression)
+    modules = ["math", ] if not modules else ["math", ] + modules
+    postfix = postfix_notation_generator.PostfixNotation(expression, modules)
     for item in postfix.generate_postfix_notation():
         if is_num(item):
             number_stack.append(item.value)
@@ -36,5 +37,5 @@ def calculate(expression):
         else:
             raise TypeError(TYPE_ERROR)
     if len(number_stack) > 1:
-            raise ValueError(MALFORMED_EXPRESSION)  # ToDo: find the reason of the problem, write the comment more specific.
+            raise ValueError(MALFORMED_EXPRESSION)
     return number_stack[0]

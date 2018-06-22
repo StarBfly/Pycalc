@@ -1,5 +1,4 @@
 from entities import Function, Constant
-from launcher import _parse_args
 import importlib
 import types
 
@@ -22,22 +21,17 @@ def upload_module_functions(module):
     return functions
 
 
-def all_modules_constants():
-    # args = _parse_args()
-    module_list = ["math", ]# + args.use_modules
+def all_modules_constants(modules_list):
     constants_dict = {}
-    for module in module_list:
+    for module in modules_list:
         module = importlib.__import__(module)
         constants_dict.update(upload_module_constants(module))
     return constants_dict
 
 
-def all_modules_functions():
-    # args = _parse_args()
-    # import pdb; pdb.set_trace()
-    module_list = ["math", ]# + args.use_modules
+def all_modules_functions(modules_list):
     funcs_dict = {}
-    for module in module_list:
+    for module in modules_list:
         module = importlib.__import__(module)
         funcs_dict.update(upload_module_functions(module))
     return funcs_dict
